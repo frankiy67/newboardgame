@@ -3,242 +3,289 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SÈVE — prototype jouable</title>
+<title>SÈVE — le potager partagé</title>
 <!-- Réutilise LE moteur (zéro divergence avec le simulateur d'équilibrage) -->
 <script src="../simulator/engine.js"></script>
 <style>
   :root{
-    --bg:#f4efe2; --panel:#fffdf6; --ink:#33291c; --line:#d8cdb4; --accent:#5a7d3c;
-    --c0:#009E73; --c1:#D55E00; --c2:#caa800; --c3:#CC79A7; /* daltonien-safe */
+    --bg1:#eef3df; --bg2:#e3ecc9; --panel:#fffdf5; --ink:#36301f; --muted:#857b5f;
+    --line:#d9ceb0; --accent:#5f7d39; --accent2:#3f5a23; --wood:#7c5a36;
+    --c0:#0a9e74; --c1:#d35400; --c2:#c79a00; --c3:#b85ca0;  /* daltonien-safe */
+    --c0b:#e3f5ee; --c1b:#fbe7d8; --c2b:#f7efce; --c3b:#f4e3ef;
   }
   *{box-sizing:border-box}
-  body{margin:0;font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  header{background:var(--accent);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-  header h1{font-size:19px;margin:0;letter-spacing:.5px}
-  header .sub{opacity:.85;font-size:13px}
-  main{max-width:1080px;margin:0 auto;padding:16px;display:grid;grid-template-columns:460px 1fr;gap:16px}
-  @media(max-width:920px){main{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-  h2{font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin:0 0 10px}
-  /* setup */
-  #setup label{display:block;margin:10px 0 4px;font-weight:600}
+  html,body{margin:0}
+  body{font:15px/1.5 "Segoe UI",system-ui,Roboto,sans-serif;color:var(--ink);
+    background:radial-gradient(1200px 600px at 50% -10%,var(--bg1),var(--bg2));min-height:100vh}
+  /* ---------- header ---------- */
+  header{position:relative;overflow:hidden;background:linear-gradient(120deg,#5f7d39,#42611f);color:#fff;
+    padding:14px 20px;box-shadow:0 2px 14px #0003}
+  header .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:2}
+  header h1{font-size:24px;margin:0;letter-spacing:1px;display:flex;align-items:center;gap:10px}
+  header .sub{opacity:.9;font-size:13px}
+  header .vines{position:absolute;inset:0;opacity:.18;z-index:1}
+  #hstatus{font-weight:700;background:#ffffff22;padding:6px 12px;border-radius:20px;backdrop-filter:blur(2px)}
+  main{max-width:1120px;margin:18px auto;padding:0 18px;display:grid;grid-template-columns:480px 1fr;gap:18px}
+  @media(max-width:940px){main{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;
+    box-shadow:0 6px 20px #00000010}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent2);margin:0 0 12px}
+  /* ---------- setup ---------- */
+  #setup label{display:block;margin:12px 0 4px;font-weight:700}
   select,button{font:inherit}
-  button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px}
-  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
-  button:disabled{opacity:.4;cursor:not-allowed}
-  /* ring */
-  #ringWrap{position:relative;width:430px;height:430px;margin:0 auto}
-  .plot{position:absolute;width:70px;height:70px;border-radius:50%;border:3px solid #0003;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;transform:translate(-50%,-50%);
-    transition:.12s;user-select:none}
-  .plot .icon{font-size:20px;line-height:1}
-  .plot .seeds{font-weight:800;font-size:19px}
-  .plot .pid{position:absolute;top:-2px;left:-2px;font-size:10px;background:#0006;color:#fff;border-radius:6px;padding:0 4px}
-  .plot.legal{cursor:pointer;box-shadow:0 0 0 3px #5a7d3c}
-  .plot.legal:hover{transform:translate(-50%,-50%) scale(1.08)}
-  .plot.land{box-shadow:0 0 0 4px #d55e00, 0 0 14px #d55e00aa}
-  .plot.path{outline:3px dashed #00000040;outline-offset:2px}
+  select{width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 16px;font-weight:600;transition:.12s}
+  button:hover{transform:translateY(-1px);box-shadow:0 4px 10px #0002}
+  button.primary{background:linear-gradient(120deg,#6b8c3f,#4b6a26);color:#fff;border:0;font-weight:800;font-size:16px;width:100%;margin-top:14px;padding:12px}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+  .hint{font-size:12.5px;color:var(--muted)}
+  /* ---------- ring ---------- */
+  #ringWrap{position:relative;width:444px;height:444px;margin:6px auto 0;max-width:100%}
+  #ringWrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .plot{position:absolute;width:74px;height:74px;border-radius:50%;transform:translate(-50%,-50%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:default;
+    box-shadow:inset 0 -6px 12px #0003, 0 3px 6px #0003;transition:transform .12s, box-shadow .12s;user-select:none;
+    border:3px solid #ffffff60}
+  .plot .emblem{font-size:21px;line-height:1;filter:drop-shadow(0 1px 1px #0005)}
+  .plot .pips{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:58px;margin-top:2px;min-height:9px}
+  .plot .pip{width:7px;height:7px;border-radius:50%;background:#ffffffcc;box-shadow:0 1px 1px #0006}
+  .plot .num{position:absolute;bottom:-9px;background:#2b2415;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:0 6px;box-shadow:0 1px 3px #0005}
+  .plot .pid{position:absolute;top:-6px;left:-6px;font-size:10px;background:#ffffffcc;color:#2b2415;border-radius:7px;padding:0 5px;font-weight:700}
+  .plot.legal{cursor:pointer;animation:breathe 1.6s ease-in-out infinite}
+  .plot.legal:hover{transform:translate(-50%,-50%) scale(1.09)}
+  @keyframes breathe{0%,100%{box-shadow:inset 0 -6px 12px #0003, 0 0 0 0 #5f7d3955}50%{box-shadow:inset 0 -6px 12px #0003, 0 0 0 7px #5f7d3922}}
+  .plot.path{outline:3px dashed #ffffffcc;outline-offset:3px}
+  .plot.land{transform:translate(-50%,-50%) scale(1.12);box-shadow:inset 0 -6px 12px #0003,0 0 0 4px #d35400,0 0 18px #d35400aa}
   #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:150px}
-  #center .big{font-size:13px;color:#7a6f58}
-  /* players */
-  .pl{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px}
-  .pl.cur{border-color:var(--accent);box-shadow:0 0 0 2px #5a7d3c33}
-  .pl .top{display:flex;justify-content:space-between;font-weight:700}
-  .basket{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;font-size:14px}
-  .basket .b{display:inline-flex;align-items:center;gap:3px}
-  .pts{font-weight:800}
-  /* preview + log */
-  #preview{min-height:42px;font-size:14px;background:#fbf7ea;border:1px dashed var(--line);border-radius:8px;padding:8px;margin:8px 0}
-  #log{height:200px;overflow:auto;font-size:13px;background:#fbf7ea;border:1px solid var(--line);border-radius:8px;padding:8px}
-  #log div{padding:2px 0;border-bottom:1px solid #efe7d2}
-  .you{color:#2c5e1f;font-weight:600}
-  table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
-  th,td{border:1px solid var(--line);padding:3px 6px;text-align:center}
-  tr.chosen{background:#e7f0db;font-weight:700}
-  .hint{font-size:12.5px;color:#7a6f58}
-  .badge{display:inline-block;border-radius:6px;padding:1px 6px;color:#fff;font-size:12px;font-weight:700}
+  #center .lbl{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  #center .big{font-size:26px;font-weight:800;color:var(--accent2)}
+  #center .sun{font-size:30px}
+  .seedFly{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0007;z-index:50;pointer-events:none}
+  #preview{min-height:46px;font-size:13.5px;background:linear-gradient(#fbf7e8,#f6efd6);border:1px solid var(--line);border-radius:12px;padding:10px;margin:12px 0 0}
+  /* ---------- players ---------- */
+  .pl{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:9px;background:linear-gradient(#fffef9,#fbf7ea);transition:.15s}
+  .pl.cur{border-color:var(--accent);box-shadow:0 0 0 3px #5f7d3933;transform:translateX(2px)}
+  .pl.you .name{color:var(--accent2)}
+  .pl .top{display:flex;justify-content:space-between;align-items:center;font-weight:800}
+  .pl .name{display:flex;align-items:center;gap:7px}
+  .avatar{width:24px;height:24px;border-radius:50%;display:inline-block}
+  .basket{display:flex;gap:9px;margin-top:7px;flex-wrap:wrap;font-size:14px;align-items:center}
+  .basket .b{display:inline-flex;align-items:center;gap:3px;font-weight:700}
+  .pts{font-weight:800;font-size:17px;color:var(--accent2)}
+  .bq{background:#5f7d39;color:#fff;border-radius:10px;padding:1px 8px;font-weight:800}
+  /* ---------- log + why ---------- */
+  #log{height:188px;overflow:auto;font-size:13px;background:#fbf7ea;border:1px solid var(--line);border-radius:12px;padding:8px}
+  #log div{padding:3px 4px;border-bottom:1px solid #efe7d2;animation:fadein .25s}
+  @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1}}
+  .you-l{color:var(--accent2);font-weight:600}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
+  th,td{border:1px solid var(--line);padding:3px 5px;text-align:center}
+  th{background:#f0ead6}
+  tr.chosen{background:#dcebca;font-weight:800}
+  .tag{display:inline-block;border-radius:7px;padding:1px 7px;color:#fff;font-weight:800;font-size:12px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:14px}
 </style>
 </head>
 <body>
 <header>
-  <div><h1>🌱 SÈVE</h1><span class="sub">le potager partagé en cercle — prototype</span></div>
-  <div id="hstatus" class="sub"></div>
+  <svg class="vines" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,90 C120,40 200,120 320,80 C440,40 520,110 660,75 C800,40 900,115 1040,78 C1120,58 1180,90 1200,80" fill="none" stroke="#fff" stroke-width="3"/><circle cx="320" cy="80" r="6" fill="#fff"/><circle cx="660" cy="75" r="6" fill="#fff"/><circle cx="1040" cy="78" r="6" fill="#fff"/></svg>
+  <div class="row">
+    <div><h1>🌱 SÈVE</h1><div class="sub">le potager partagé en cercle · 2–4 jardiniers</div></div>
+    <div id="hstatus">Bienvenue au potager</div>
+  </div>
 </header>
 
 <main>
-  <!-- COLONNE GAUCHE : plateau -->
+  <!-- GAUCHE : plateau -->
   <section class="card">
     <div id="setup">
-      <h2>Nouvelle partie</h2>
-      <label>Adversaires IA</label>
-      <select id="nbots"><option value="1">1 (2 joueurs)</option><option value="2">2 (3 joueurs)</option><option value="3" selected>3 (4 joueurs)</option></select>
-      <label>Difficulté des IA</label>
+      <h2>Nouvelle saison</h2>
+      <label>Adversaires (jardiniers IA)</label>
+      <select id="nbots"><option value="1">1 adversaire — 2 joueurs</option><option value="2">2 adversaires — 3 joueurs</option><option value="3" selected>3 adversaires — 4 joueurs</option></select>
+      <label>Tempérament des IA</label>
       <select id="diff">
-        <option value="greedy">Facile — « attrape la plus grosse récolte »</option>
-        <option value="contrarian">Moyen — joue le déni</option>
-        <option value="balanced" selected>Difficile — vise les bouquets et évite de te nourrir</option>
+        <option value="greedy">🌾 Paisible — attrape la plus grosse récolte</option>
+        <option value="contrarian">🦝 Maraudeur — joue le déni</option>
+        <option value="balanced" selected>🦊 Rusé — vise les bouquets, évite de te nourrir</option>
       </select>
-      <p class="hint">Tu es le jardinier 🟢 <b>VOUS</b>. Premier joueur tiré au sort, puis sens horaire ; il tourne à chaque manche.</p>
-      <button class="primary" onclick="startGame()">Planter la saison ▸</button>
+      <p class="hint">Vous êtes le jardinier en tête de liste. Le premier joueur est tiré au sort puis tourne à chaque manche — personne n'est avantagé.</p>
+      <button class="primary" onclick="startGame()">🌧️ Planter la saison</button>
+      <div class="hint" style="margin-top:14px;line-height:1.6">
+        <b>But :</b> le plus de points. Un <b>bouquet</b> = 1 de chaque des 4 légumes = <b>8 pts</b> ; chaque légume isolé = <b>1 pt</b>.<br>
+        <b>Tour :</b> choisis une parcelle, sa poignée de graines se sème dans les suivantes ; tu récoltes là où la <b>dernière</b> graine tombe — mais tu engraisses le chemin pour le suivant.
+      </div>
     </div>
     <div id="board" style="display:none">
-      <div id="ringWrap"><div id="center"></div></div>
-      <div id="preview" class="hint">Survole une parcelle pour voir où ta poignée s'épuise.</div>
+      <div id="ringWrap"><svg id="ringSvg" viewBox="0 0 444 444"></svg><div id="center"></div></div>
+      <div id="preview" class="hint">Survole une parcelle entourée de vert pour voir où ta poignée s'épuise.</div>
     </div>
   </section>
 
-  <!-- COLONNE DROITE : joueurs, log, why -->
+  <!-- DROITE : joueurs, log, why -->
   <section>
-    <div class="card" id="playersCard" style="display:none">
-      <h2>Jardiniers</h2>
-      <div id="players"></div>
-    </div>
-    <div class="card" id="logCard" style="display:none;margin-top:16px">
-      <h2 style="display:flex;justify-content:space-between;align-items:center">Journal
-        <button onclick="showWhy()" id="whyBtn" title="debug + apprentissage">🤔 Pourquoi l'IA ?</button></h2>
+    <div class="card" id="playersCard" style="display:none"><h2>Les jardiniers</h2><div id="players"></div></div>
+    <div class="card" id="logCard" style="display:none;margin-top:18px">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:8px">Journal du potager
+        <button onclick="showWhy()" id="whyBtn" title="comprendre le coup de l'IA">🤔 Pourquoi l'IA ?</button></h2>
       <div id="why"></div>
       <div id="log"></div>
     </div>
   </section>
 </main>
+<footer>SÈVE · prototype jouable — même moteur que le simulateur d'équilibrage (8 cycles, 1er joueur résolu, durée 25-40 min)</footer>
 
 <script>
 const E = window.SeveEngine;
 const ICON = E.TYPE_ICONS, SHAPE = E.TYPE_SHAPES, NAME = E.TYPE_NAMES;
 const COL = ['var(--c0)','var(--c1)','var(--c2)','var(--c3)'];
+const COLHEX = ['#0a9e74','#d35400','#c79a00','#b85ca0'];
+const SOIL = ['var(--c0b)','var(--c1b)','var(--c2b)','var(--c3b)'];
+const AVATAR = ['#5f7d39','#c0392b','#2980b9','#8e44ad'];
 const HUMAN = 0;
-let M = null, cfg = null, rng = null, busy = false;
+let M=null, cfg=null, rng=null, busy=false;
 
-function log(html, cls){ const d=document.createElement('div'); if(cls)d.className=cls; d.innerHTML=html; const L=document.getElementById('log'); L.prepend(d); }
-function pchip(seat){ return seat===HUMAN ? '<span class="you">VOUS</span>' : 'IA '+seat; }
-function cropTag(t){ return `<span style="color:${COL[t]}">${ICON[t]}${SHAPE[t]}</span>`; }
+function log(html, cls){ const d=document.createElement('div'); if(cls)d.className=cls; d.innerHTML=html;
+  const L=document.getElementById('log'); L.prepend(d); }
+function pchip(seat){ return seat===HUMAN ? '<b class="you-l">VOUS</b>' : 'Jardinier '+(seat+1); }
+function cropTag(t){ return `<span class="tag" style="background:${COLHEX[t]}">${ICON[t]}${SHAPE[t]}</span>`; }
+function pips(n,t){ let h=''; const show=Math.min(n,12); for(let i=0;i<show;i++)h+='<span class="pip"></span>'; return h; }
 
 function startGame(){
-  const nbots = +document.getElementById('nbots').value;
-  const diff = document.getElementById('diff').value;
-  const n = nbots+1;
-  cfg = E.defaultConfig();
-  rng = E.makeRng((Date.now()>>>0) ^ (Math.random()*1e9>>>0));
-  const seats = []; for(let i=0;i<n;i++) seats.push(i===HUMAN?null:diff);
-  M = E.createMatch(n, cfg, seats, rng, {});
+  const n=(+document.getElementById('nbots').value)+1, diff=document.getElementById('diff').value;
+  cfg=E.defaultConfig();
+  rng=E.makeRng((Date.now()>>>0)^(Math.random()*1e9>>>0));
+  const seats=[]; for(let i=0;i<n;i++) seats.push(i===HUMAN?null:diff);
+  M=E.createMatch(n,cfg,seats,rng,{});
   document.getElementById('setup').style.display='none';
-  document.getElementById('board').style.display='block';
-  document.getElementById('playersCard').style.display='block';
-  document.getElementById('logCard').style.display='block';
-  document.getElementById('log').innerHTML='';
-  document.getElementById('why').innerHTML='';
+  ['board','playersCard','logCard'].forEach(id=>document.getElementById(id).style.display='block');
+  document.getElementById('log').innerHTML=''; document.getElementById('why').innerHTML='';
   buildRing();
-  log(`🌧️ Pluie de la manche 1 : 9 graines tombées au hasard.`);
-  render();
-  pump();
+  log(`🌧️ <b>Manche 1.</b> La pluie a fait tomber 9 graines au hasard sur le potager.`);
+  render(); pump();
 }
+
+function plotXY(i){ const R=168,cx=222,cy=222,a=-Math.PI/2+i*2*Math.PI/cfg.nPlots; return [cx+R*Math.cos(a),cy+R*Math.sin(a)]; }
 
 function buildRing(){
   const wrap=document.getElementById('ringWrap');
   wrap.querySelectorAll('.plot').forEach(e=>e.remove());
-  const n=cfg.nPlots, R=180, cx=215, cy=215;
-  for(let i=0;i<n;i++){
-    const a=-Math.PI/2 + i*2*Math.PI/n;
-    const el=document.createElement('div');
-    el.className='plot'; el.id='plot'+i;
-    el.style.left=(cx+R*Math.cos(a))+'px'; el.style.top=(cy+R*Math.sin(a))+'px';
-    el.innerHTML=`<span class="pid">${i}</span><span class="icon"></span><span class="seeds"></span>`;
-    el.onmouseenter=()=>preview(i); el.onmouseleave=clearPreview;
-    el.onclick=()=>humanPlay(i);
+  // anneau décoratif (chemin de terre)
+  const svg=document.getElementById('ringSvg');
+  svg.innerHTML=`<circle cx="222" cy="222" r="168" fill="none" stroke="#cdbf9c" stroke-width="30" opacity=".55"/>
+    <circle cx="222" cy="222" r="168" fill="none" stroke="#b8a877" stroke-width="2" stroke-dasharray="3 7" opacity=".7"/>`;
+  for(let i=0;i<cfg.nPlots;i++){
+    const [x,y]=plotXY(i);
+    const el=document.createElement('div'); el.className='plot'; el.id='plot'+i;
+    el.style.left=x+'px'; el.style.top=y+'px';
+    el.innerHTML=`<span class="pid">${i}</span><span class="emblem"></span><span class="pips"></span><span class="num"></span>`;
+    el.onmouseenter=()=>preview(i); el.onmouseleave=clearPreview; el.onclick=()=>humanPlay(i);
     wrap.appendChild(el);
   }
 }
 
 function render(){
   const s=M.state;
-  // plots
   for(let i=0;i<cfg.nPlots;i++){
-    const t=cfg.types[i], el=document.getElementById('plot'+i);
-    el.style.background = COL[t]; el.style.color = t===2?'#3a2f00':'#fff';
-    el.querySelector('.icon').textContent = ICON[t]+SHAPE[t];
-    el.querySelector('.seeds').textContent = s.ring[i];
+    const t=cfg.types[i], el=document.getElementById('plot'+i), n=s.ring[i];
+    el.style.background=`radial-gradient(circle at 50% 32%, ${SOIL[t]}, ${COLHEX[t]})`;
+    el.querySelector('.emblem').textContent=ICON[t];
+    el.querySelector('.pips').innerHTML=pips(n,t);
+    el.querySelector('.num').textContent=n;
+    el.querySelector('.num').style.display = n>0?'block':'none';
     el.classList.remove('legal','land','path');
   }
-  const human = E.currentIsHuman(M);
-  if(human && !M.done){ E.legalMoves(s).forEach(i=>document.getElementById('plot'+i).classList.add('legal')); }
-  // center
-  document.getElementById('center').innerHTML = M.done ? '<div class="big">Saison finie</div>' :
-    `<div class="big">Manche</div><div style="font-size:22px;font-weight:800">${M.round+1}/${M.maxRounds}</div>`;
+  const human=E.currentIsHuman(M);
+  if(human&&!M.done) E.legalMoves(s).forEach(i=>document.getElementById('plot'+i).classList.add('legal'));
+  document.getElementById('center').innerHTML = M.done ?
+    `<div class="sun">🌾</div><div class="lbl">saison finie</div>` :
+    `<div class="lbl">manche</div><div class="big">${M.round+1}<span style="font-size:15px;color:var(--muted)">/${M.maxRounds}</span></div>`;
   // players
   const P=document.getElementById('players'); P.innerHTML='';
   const sc=E.scores(s);
+  const lead=Math.max(...sc.map(x=>x.points));
   for(let p=0;p<s.nPlayers;p++){
-    const b=s.baskets[p];
-    const div=document.createElement('div');
-    div.className='pl'+((s.current===p&&!M.done)?' cur':'');
-    div.innerHTML=`<div class="top"><span>${pchip(p)} ${s.current===p&&!M.done?'⬅︎':''}</span>
-      <span class="pts">${sc[p].points} pts</span></div>
-      <div class="basket">${b.map((c,t)=>`<span class="b" style="color:${COL[t]}">${ICON[t]}${SHAPE[t]} ${c}</span>`).join('')}
-      <span class="b">💐 ${sc[p].bouquets}</span></div>`;
+    const b=s.baskets[p], div=document.createElement('div');
+    div.className='pl'+(p===HUMAN?' you':'')+((s.current===p&&!M.done)?' cur':'');
+    div.innerHTML=`<div class="top"><span class="name"><span class="avatar" style="background:${AVATAR[p]}"></span>
+      ${p===HUMAN?'VOUS':'Jardinier '+(p+1)} ${(s.current===p&&!M.done)?'⬅︎':''} ${sc[p].points===lead&&lead>0?'👑':''}</span>
+      <span class="pts">${sc[p].points}</span></div>
+      <div class="basket">${b.map((c,t)=>`<span class="b" style="color:${COLHEX[t]}">${ICON[t]}${SHAPE[t]} ${c}</span>`).join('')}
+      <span class="bq">💐 ${sc[p].bouquets}</span></div>`;
     P.appendChild(div);
   }
-  document.getElementById('hstatus').textContent = M.done ? '' :
-    (human ? '▶ À vous de jouer' : '⏳ Les IA jouent…');
+  document.getElementById('hstatus').innerHTML = M.done ? '🏁 Partie terminée' :
+    (human?'▶ À vous de semer':'⏳ Les IA jardinent…');
   if(M.done) endGame(sc);
 }
 
 function preview(i){
-  if(busy||M.done||!E.currentIsHuman(M)) return;
-  if(M.state.ring[i]===0){ document.getElementById('preview').innerHTML='<span class="hint">Parcelle vide — impossible de semer ici.</span>'; return; }
-  // réutilise l'évaluation du moteur (même info que l'IA)
-  const c = E.evaluateMoves(M.state,'balanced',rng).find(x=>x.start===i);
-  // surligne le chemin + l'atterrissage
+  if(busy||M.done||!E.currentIsHuman(M)||M.state.ring[i]===0) return;
+  const c=E.evaluateMoves(M.state,'balanced',rng).find(x=>x.start===i);
   for(let k=1;k<=c.seeds;k++){ const idx=(i+k)%cfg.nPlots; document.getElementById('plot'+idx).classList.add(k===c.seeds?'land':'path'); }
-  document.getElementById('preview').innerHTML =
-    `Semer la parcelle <b>${i}</b> (${c.seeds} graines) → atterrit en <b>${c.landing}</b> et récolte <b>${cropTag(c.type)} ×${c.gained}</b>.
-     <span class="hint"> | Δscore +${c.deltaScore} · tu offres au suivant une récolte de ${c.giftToNext}.</span>`;
+  document.getElementById('preview').innerHTML=
+    `Semer la parcelle <b>${i}</b> (${c.seeds} graine${c.seeds>1?'s':''}) → la dernière tombe en <b>${c.landing}</b> :
+     tu récoltes <b>${cropTag(c.type)} ×${c.gained}</b>.
+     <div class="hint" style="margin-top:3px">gain de score +${c.deltaScore} · tu offres au suivant une récolte possible de <b>${c.giftToNext}</b></div>`;
 }
 function clearPreview(){ if(busy)return; for(let i=0;i<cfg.nPlots;i++)document.getElementById('plot'+i)?.classList.remove('land','path'); }
 
-function humanPlay(i){
-  if(busy||M.done||!E.currentIsHuman(M)) return;
-  if(M.state.ring[i]===0) return;
-  const info=E.matchPlay(M,i);
-  log(`${pchip(HUMAN)} sème la parcelle ${info.start} (${info.seeds} gr.) → récolte ${cropTag(info.type)}×${info.gained}`,'you');
-  clearPreview(); render(); pump();
+function flySeeds(from,to,cb){
+  const wrap=document.getElementById('ringWrap');
+  const [x0,y0]=plotXY(from),[x1,y1]=plotXY(to);
+  const f=document.createElement('div'); f.className='seedFly'; f.style.left=x0+'px'; f.style.top=y0+'px';
+  wrap.appendChild(f);
+  requestAnimationFrame(()=>{ f.style.transition='left .32s ease-in,top .32s ease-in,opacity .32s'; f.style.left=x1+'px'; f.style.top=y1+'px'; });
+  setTimeout(()=>{ f.remove(); cb&&cb(); },340);
 }
 
-// fait jouer les IA une par une, avec une petite pause, jusqu'au tour humain / fin
+function humanPlay(i){
+  if(busy||M.done||!E.currentIsHuman(M)||M.state.ring[i]===0) return;
+  const land=(i+M.state.ring[i])%cfg.nPlots;
+  busy=true;
+  flySeeds(i,land,()=>{
+    const info=E.matchPlay(M,i);
+    log(`${pchip(HUMAN)} sème la parcelle ${info.start} (${info.seeds} gr.) → récolte ${cropTag(info.type)}×${info.gained}`,'you-l');
+    clearPreview(); busy=false; render(); pump();
+  });
+}
+
 function pump(){
-  if(M.done){ render(); return; }
-  if(E.currentIsHuman(M)){ render(); return; }
+  if(M.done){render();return;}
+  if(E.currentIsHuman(M)){render();return;}
   busy=true; render();
   setTimeout(()=>{
     const prevRound=M.round;
     const info=E.matchPlay(M);
     const ai=M.lastAI;
-    log(`${pchip(ai.seat)} <span class="hint">(${ai.strat})</span> sème ${info.start} (${info.seeds} gr.) → récolte ${cropTag(info.type)}×${info.gained}`);
-    if(M.round>prevRound && !M.done) log(`🌧️ Pluie de la manche ${M.round+1}.`);
-    busy=false; pump();
-  }, 520);
+    flySeeds(info.start, info.landing, ()=>{
+      log(`${pchip(ai.seat)} <span class="hint">(${ai.strat})</span> sème ${info.start} (${info.seeds} gr.) → récolte ${cropTag(info.type)}×${info.gained}`);
+      if(M.round>prevRound&&!M.done) log(`🌧️ <b>Manche ${M.round+1}.</b> Nouvelle pluie.`);
+      busy=false; pump();
+    });
+  },560);
 }
 
 function showWhy(){
   const w=document.getElementById('why');
   if(!M||!M.lastAI){ w.innerHTML='<p class="hint">Aucune IA n\'a encore joué.</p>'; return; }
   const ai=M.lastAI;
-  let h=`<p class="hint">Dernier coup — ${pchip(ai.seat)} (<b>${ai.strat}</b>). L'IA a noté chaque semis possible :</p>
-   <table><tr><th>parcelle</th><th>graines</th><th>atterrit→</th><th>récolte</th><th>Δscore</th><th>don au suivant</th><th>valeur</th></tr>`;
-  ai.candidates.slice(0,8).forEach(c=>{
-    h+=`<tr class="${c.start===ai.move?'chosen':''}"><td>${c.start}</td><td>${c.seeds}</td><td>${c.landing} ${cropTag(c.type)}</td>
+  let h=`<p class="hint">Dernier coup — ${pchip(ai.seat)} (<b>${ai.strat}</b>) a noté chaque semis possible :</p>
+   <table><tr><th>parc.</th><th>gr.</th><th>atterrit</th><th>récolte</th><th>Δscore</th><th>don suivant</th><th>valeur</th></tr>`;
+  ai.candidates.slice(0,7).forEach(c=>{
+    h+=`<tr class="${c.start===ai.move?'chosen':''}"><td>${c.start}</td><td>${c.seeds}</td><td>${c.landing} ${ICON[c.type]}${SHAPE[c.type]}</td>
       <td>×${c.gained}</td><td>${c.deltaScore>=0?'+':''}${c.deltaScore}</td><td>${c.giftToNext}</td><td>${c.value.toFixed(2)}</td></tr>`;
   });
-  h+='</table><p class="hint">La ligne verte = le coup choisi (valeur la plus haute selon sa stratégie).</p>';
+  h+='</table><p class="hint">Ligne verte = coup choisi (meilleure valeur selon sa stratégie). Le « don au suivant » est ce que ce coup laisse à récolter au joueur d\'après.</p>';
   w.innerHTML=h;
 }
 
 function endGame(sc){
-  let best=-1,wi=[]; sc.forEach((x,i)=>{ if(x.points>best){best=x.points;wi=[i]} else if(x.points===best)wi.push(i); });
+  let best=-1,wi=[]; sc.forEach((x,i)=>{ if(x.points>best){best=x.points;wi=[i];} else if(x.points===best)wi.push(i); });
   const win=wi[0];
-  document.getElementById('hstatus').innerHTML = win===HUMAN?'🏆 Vous gagnez !':`🏁 ${pchip(win)} gagne`;
-  log(`<b>Fin de saison.</b> ${pchip(win)} l'emporte avec ${best} pts.`);
-  const c=document.getElementById('center');
-  c.innerHTML += `<div style="margin-top:6px"><button class="primary" onclick="location.reload()">Rejouer</button></div>`;
+  document.getElementById('hstatus').innerHTML = win===HUMAN?'🏆 Vous gagnez la saison !':`🏁 ${win+1>0?'Jardinier '+(win+1):''} l'emporte`;
+  if(!document.getElementById('replayBtn'))
+    document.getElementById('center').innerHTML += `<div style="margin-top:8px"><button id="replayBtn" class="primary" style="width:auto;padding:8px 14px" onclick="location.reload()">↻ Rejouer</button></div>`;
+  log(`<b>🌾 Fin de saison.</b> ${pchip(win)} l'emporte avec <b>${best} pts</b>.`);
 }
 </script>
 </body>

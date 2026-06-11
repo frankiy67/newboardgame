@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>SÈVE — Print &amp; Play (N&amp;B)</title>
+<style>
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box}
+  body{font:13px/1.4 Georgia,"Times New Roman",serif;color:#000;background:#fff;margin:0;padding:14px}
+  h1{font-size:24px;margin:0 0 2px} h2{font-size:15px;border-bottom:2px solid #000;padding-bottom:3px;margin:22px 0 10px;page-break-after:avoid}
+  .muted{color:#444;font-size:12px}
+  .page-break{page-break-before:always}
+  .noprint{background:#f3f3f3;border:1px dashed #999;padding:8px 12px;border-radius:6px;margin:10px 0}
+  @media print{.noprint{display:none}}
+  /* ring */
+  .ringbox{display:flex;justify-content:center;margin:6px 0}
+  /* rain cards */
+  .raingrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .rcard{border:1.5px solid #000;border-radius:7px;padding:6px;text-align:center;page-break-inside:avoid}
+  .rcard .t{font-size:10px;font-weight:bold;letter-spacing:.5px}
+  /* aids */
+  .aid{border:2px solid #000;border-radius:8px;padding:12px 14px;margin-bottom:10px;page-break-inside:avoid}
+  .aid h3{margin:0 0 6px;font-size:14px}
+  .aid ol{margin:4px 0 0 18px;padding:0} .aid li{margin:2px 0}
+  table{border-collapse:collapse;width:100%;margin-top:6px}
+  th,td{border:1px solid #000;padding:4px 6px;text-align:center;font-size:12px}
+  .legend span{display:inline-block;margin-right:14px;font-size:13px}
+  .basket td{height:26px}
+</style>
+</head>
+<body>
+<div class="noprint">🖨️ <b>Imprimez en N&amp;B.</b> Ctrl/Cmd-P → A4. Page 1 : le plateau (Anneau). Page 2 : 20 cartes Pluie (à découper). Page 3 : aides &amp; feuilles de panier. Les 4 cultures se distinguent par leur <b>forme</b> (●▲■◆) et leur <b>nom</b> — aucune couleur nécessaire.</div>
+
+<h1>🌱 SÈVE — Print &amp; Play</h1>
+<div class="muted">2–4 joueurs · 30–45 min · matériel : ce PDF + ~60 graines (haricots secs / perles / jetons).</div>
+
+<div class="legend" style="margin-top:8px">
+  <span><b>●</b> Haricot</span><span><b>▲</b> Tomate</span><span><b>■</b> Maïs</span><span><b>◆</b> Aubergine</span>
+</div>
+
+<h2>1 · Le plateau — l'Anneau (12 parcelles)</h2>
+<div class="ringbox"><svg id="ring" width="520" height="520" viewBox="0 0 520 520"></svg></div>
+<div class="muted">Posez 4 graines dans chaque parcelle au début. Semez une parcelle non vide → déposez ses graines une par une dans les suivantes (sens horaire) → récoltez la parcelle où tombe la dernière graine.</div>
+
+<div class="page-break"></div>
+<h2>2 · Cartes Pluie (20) — découpez</h2>
+<div class="muted" style="margin-bottom:8px">Chaque manche, révélez une carte : ajoutez une graine sur chaque parcelle marquée d'un point (9 graines). Les positions n° correspondent au plateau.</div>
+<div class="raingrid" id="rain"></div>
+
+<div class="page-break"></div>
+<h2>3 · Aides de jeu &amp; feuilles de panier</h2>
+<div class="aid">
+  <h3>Tour de jeu</h3>
+  <ol>
+    <li><b>Manche</b> : révélez 1 carte Pluie → 9 graines aux parcelles indiquées.</li>
+    <li>Chacun, dans l'ordre : <b>SEMER</b> (prendre toutes les graines d'une parcelle, les déposer 1/1 horaire) <b>puis RÉCOLTER</b> (la dernière graine : prendre toutes les graines de sa parcelle = légumes de ce type ; elles quittent le jeu).</li>
+    <li>Fin de manche : le jeton 1ᵉʳ jardinier passe à gauche.</li>
+  </ol>
+  <table><tr><th>Joueurs</th><th>2</th><th>3</th><th>4</th></tr><tr><th>Manches</th><td>20</td><td>15</td><td>12</td></tr></table>
+  <div style="margin-top:6px"><b>Score :</b> bouquet (1 ●▲■◆) = <b>8 pts</b> · légume isolé = <b>1 pt</b>.</div>
+</div>
+
+<div class="aid">
+  <h3>Feuille de panier (cochez vos légumes)</h3>
+  <table class="basket"><tr><th>● Haricot</th><th>▲ Tomate</th><th>■ Maïs</th><th>◆ Aubergine</th></tr>
+  <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr></table>
+  <div class="muted" style="margin-top:4px">Bouquets (lignes complètes ●▲■◆) × 8 + légumes restants × 1.</div>
+</div>
+
+<script>
+const SHAPES=['●','▲','■','◆'], NAMES=['Haricot','Tomate','Maïs','Aubergine'];
+// ---- plateau ----
+(function(){
+  const svg=document.getElementById('ring'), cx=260,cy=260,R=190;
+  let s=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#000" stroke-width="24" opacity=".12"/>`;
+  for(let i=0;i<12;i++){
+    const a=-Math.PI/2+i*2*Math.PI/12, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), t=i%4;
+    s+=`<circle cx="${x}" cy="${y}" r="40" fill="#fff" stroke="#000" stroke-width="2.5"/>`;
+    s+=`<text x="${x}" y="${y-8}" font-size="26" text-anchor="middle">${SHAPES[t]}</text>`;
+    s+=`<text x="${x}" y="${y+14}" font-size="10" text-anchor="middle">${NAMES[t]}</text>`;
+    s+=`<text x="${x}" y="${y-26}" font-size="10" font-weight="bold" text-anchor="middle">${i}</text>`;
+    s+=`<text x="${x}" y="${y+30}" font-size="9" text-anchor="middle" fill="#555">▢▢▢▢ graines</text>`;
+  }
+  s+=`<text x="${cx}" y="${cy-6}" font-size="15" text-anchor="middle" font-weight="bold">SÈVE</text>`;
+  s+=`<text x="${cx}" y="${cy+12}" font-size="10" text-anchor="middle">semez · récoltez</text>`;
+  svg.innerHTML=s;
+})();
+// ---- cartes pluie (reproductibles, ~uniformes : 9 graines / 12 parcelles) ----
+(function(){
+  function rng(seed){let a=seed>>>0;return()=>{a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+  const R=rng(777), wrap=document.getElementById('rain');
+  for(let c=0;c<20;c++){
+    const counts=new Array(12).fill(0);
+    for(let k=0;k<9;k++) counts[Math.floor(R()*12)]++;
+    // mini-anneau 3x4
+    let cells='';
+    for(let i=0;i<12;i++){
+      const n=counts[i];
+      cells+=`<div style="border:1px solid #000;border-radius:4px;height:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px">
+        <span style="font-size:9px;color:#666">${i}${SHAPES[i%4]}</span>
+        <b style="font-size:13px">${n?('+'+n):'·'}</b></div>`;
+    }
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="rcard"><div class="t">PLUIE ${c+1}</div>
+       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:4px">${cells}</div></div>`);
+  }
+})();
+</script>
+</body>
+</html>
