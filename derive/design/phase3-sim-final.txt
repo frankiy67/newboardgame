@@ -1,0 +1,39 @@
+
+══════════ DÉRIVE — v1.0-FINAL (2000 parties/config, seed 12345) ══════════
+config: T={"2":50,"3":30,"4":22} market=5 maj=undefined/undefined
+
+── 2 joueurs ──
+  winrate/stratégie : random 20.2%  greedy 36.3%  balanced 74.5%  contrarian 68.1%
+  winrate/siège(mixte): 48.6%  51.4%
+  winrate/siège(miroir): 48.3%  51.7%  (écart 3.4 pts)
+  durée tours        : moy 42.0  std 1.7 (4.0%)
+  écart de score     : moy 19.0  std 13.8  | part majorités 0.0%
+  prise/couleur      : 🔵 24.9%  🟠 25.1%  🟢 24.9%  🟣 25.1%
+  prise/temps        : t1:25.5%  t2:29.8%  t3:21.8%  t4:22.9%
+  🚩 TROP DE HASARD: random 20.2% > 15%
+
+── 3 joueurs ──
+  winrate/stratégie : random 10.9%  greedy 33.6%  balanced 57.3%  contrarian 31.9%
+  winrate/siège(mixte): 33.4%  32.4%  34.3%
+  winrate/siège(miroir): 34.3%  32.2%  33.6%  (écart 2.1 pts)
+  durée tours        : moy 38.4  std 1.7 (4.5%)
+  écart de score     : moy 18.9  std 12.4  | part majorités 0.0%
+  prise/couleur      : 🔵 24.8%  🟠 25.2%  🟢 25.1%  🟣 24.9%
+  prise/temps        : t1:26.2%  t2:29.5%  t3:21.3%  t4:22.9%
+  ✅ aucun red flag
+
+── 4 joueurs ──
+  winrate/stratégie : random 8.3%  greedy 29.7%  balanced 44.8%  contrarian 17.3%
+  winrate/siège(mixte): 25.2%  24.9%  24.1%  25.8%
+  winrate/siège(miroir): 23.6%  23.2%  27.6%  25.6%  (écart 4.4 pts)
+  durée tours        : moy 38.1  std 1.7 (4.5%)
+  écart de score     : moy 16.9  std 9.0  | part majorités 0.0%
+  prise/couleur      : 🔵 24.9%  🟠 25.0%  🟢 25.0%  🟣 25.1%
+  prise/temps        : t1:26.7%  t2:29.4%  t3:21.1%  t4:22.8%
+  🚩 STRATÉGIE DOMINANTE: balanced 44.8% > 40% (4j)
+
+── BILAN v1.0-FINAL ──
+  🚩 [2j] TROP DE HASARD: random 20.2% > 15%
+  🚩 [4j] STRATÉGIE DOMINANTE: balanced 44.8% > 40% (4j)
+
+TOTAL red flags: 2
