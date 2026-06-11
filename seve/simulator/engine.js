@@ -225,37 +225,83 @@
     }).sort((a, b) => b.value - a.value);
   }
 
-  /* ---- Boucle de partie ------------------------------------------------- */
-  // strategyBySeat : tableau de noms d'IA, un par siège.
-  function playGame(nPlayers, cfg, strategyBySeat, rng, opts) {
+  /* ---- Contrôleur de match pas-à-pas -----------------------------------
+   * Partagé par le simulateur (Phase 3) ET le prototype HTML (Phase 5) →
+   * une seule implémentation de la boucle = zéro divergence d'équilibrage.
+   * seatStrategy : nom d'IA par siège ; un siège HUMAIN vaut null.
+   * --------------------------------------------------------------------- */
+  function createMatch(nPlayers, cfg, seatStrategy, rng, opts) {
     opts = opts || {};
-    const state = initState(nPlayers, cfg, rng, opts.jitter);
-    const maxRounds = (cfg.roundsByCount && cfg.roundsByCount[nPlayers]) || 0;
-    let starter = cfg.randomFirstPlayer && rng ? Math.floor(rng() * nPlayers) : 0;
-    let round = 0, guard = 0;
-    while (guard++ < 50000) {
-      if (maxRounds > 0) { if (round >= maxRounds) break; }
-      else if (isOver(state)) break;       // mode descendant (sans saison)
-      // SOURCE : la pluie nourrit les parcelles (les plus vides, ou au hasard)
-      if (cfg.rainPerRound > 0) rain(state, cfg.rainPerRound, cfg.randomRain ? rng : null);
-      // LEVIER catch-up : rend des graines au joueur en dernière position
-      if (cfg.lastPlaceBonus > 0) applyLastPlaceBonus(state, cfg.lastPlaceBonus);
-      let passes = 0;
-      for (let k = 0; k < nPlayers; k++) {
-        state.current = (starter + k) % nPlayers;
-        const moves = legalMoves(state);
-        if (moves.length) {
-          const mv = AIs[strategyBySeat[state.current]](state, rng);
-          applyMove(state, mv);
-        } else passes++;
-      }
-      round++;
-      if (passes >= nPlayers && maxRounds === 0) break;
-      if (cfg.rotateStart) starter = (starter + 1) % nPlayers;
+    const m = {
+      cfg, nPlayers, rng, seatStrategy,
+      state: initState(nPlayers, cfg, rng, opts.jitter),
+      maxRounds: (cfg.roundsByCount && cfg.roundsByCount[nPlayers]) || 0,
+      starter: cfg.randomFirstPlayer && rng ? Math.floor(rng() * nPlayers) : 0,
+      round: 0, order: [], idx: 0, done: false, lastAI: null,
+    };
+    _beginRound(m);
+    return m;
+  }
+
+  function _beginRound(m) {
+    const ended = m.maxRounds > 0 ? m.round >= m.maxRounds : isOver(m.state);
+    if (ended) { m.done = true; m.state.done = true; m.state.rounds = m.round; return; }
+    if (m.cfg.rainPerRound > 0) rain(m.state, m.cfg.rainPerRound, m.cfg.randomRain ? m.rng : null);
+    if (m.cfg.lastPlaceBonus > 0) applyLastPlaceBonus(m.state, m.cfg.lastPlaceBonus);
+    m.order = [];
+    for (let k = 0; k < m.nPlayers; k++) m.order.push((m.starter + k) % m.nPlayers);
+    m.idx = 0;
+    m.state.current = m.order[0];
+    _skipDead(m);
+  }
+
+  function _skipDead(m) {
+    while (!m.done && m.idx < m.order.length && legalMoves(m.state).length === 0) {
+      m.idx++;
+      if (m.idx < m.order.length) m.state.current = m.order[m.idx];
     }
-    state.rounds = round;
-    state.done = true;
-    return { state, scores: scores(state), winner: winner(state), turns: state.turn };
+    if (!m.done && m.idx >= m.order.length) _endRound(m);
+  }
+
+  function _endRound(m) {
+    m.round++;
+    if (m.cfg.rotateStart) m.starter = (m.starter + 1) % m.nPlayers;
+    _beginRound(m);
+  }
+
+  function _afterMove(m) {
+    m.idx++;
+    if (m.idx >= m.order.length) { _endRound(m); return; }
+    m.state.current = m.order[m.idx];
+    _skipDead(m);
+  }
+
+  function currentIsHuman(m) { return !m.done && m.seatStrategy[m.state.current] == null; }
+
+  // joue le siège courant. Humain → `plot` fourni. IA → décide seule (+ trace "pourquoi").
+  function matchPlay(m, plot) {
+    if (m.done) return null;
+    const seat = m.state.current;
+    let info;
+    if (m.seatStrategy[seat] == null) {
+      info = applyMove(m.state, plot);
+    } else {
+      const strat = m.seatStrategy[seat];
+      const cands = evaluateMoves(m.state, strat, m.rng);
+      const mv = AIs[strat](m.state, m.rng);
+      info = applyMove(m.state, mv);
+      m.lastAI = { seat, strat, move: mv, candidates: cands, chosen: cands.find(c => c.start === mv) || null };
+    }
+    _afterMove(m);
+    return info;
+  }
+
+  /* ---- Partie complète (simulateur) : pilote le contrôleur ------------- */
+  function playGame(nPlayers, cfg, strategyBySeat, rng, opts) {
+    const m = createMatch(nPlayers, cfg, strategyBySeat, rng, opts);
+    let guard = 0;
+    while (!m.done && guard++ < 100000) matchPlay(m);
+    return { state: m.state, scores: scores(m.state), winner: winner(m.state), turns: m.state.turn };
   }
 
   // SOURCE : ajoute `k` graines. Si rng fourni → parcelles au hasard (variance),
@@ -293,5 +339,6 @@
     legalMoves, applyMove, advance, isOver, rain,
     scorePlayer, scores, winner,
     AIs, evaluateMoves, bestHarvestAvailable, playGame,
+    createMatch, matchPlay, currentIsHuman,
   };
 });
