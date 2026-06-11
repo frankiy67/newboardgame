@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DÉRIVE — la longue nuit</title>
+<script src="../simulator/engine.js"></script>
+<style>
+  :root{
+    --bg1:#0c1830; --bg2:#152a4d; --panel:#16284a; --panel2:#1d3358; --ink:#e9f0ff; --muted:#9fb2d6;
+    --line:#2b4575; --gold:#f0c560; --accent:#3d6fc4;
+    --c0:#3e83e6; --c1:#e8911f; --c2:#1fb389; --c3:#a064d6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 "Segoe UI",system-ui,Roboto,sans-serif;color:#e9f0ff;
+    background:radial-gradient(1100px 500px at 50% -5%,#1b315a,#0c1830) fixed;min-height:100vh}
+  header{position:relative;overflow:hidden;background:linear-gradient(120deg,#13284d,#0c1830);
+    border-bottom:1px solid #2b4575;padding:14px 20px;box-shadow:0 2px 16px #0006}
+  header .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:2}
+  header h1{font-size:24px;margin:0;letter-spacing:1.5px;color:#f0c560;display:flex;align-items:center;gap:10px}
+  header .sub{color:#9fb2d6;font-size:13px}
+  .stars{position:absolute;inset:0;z-index:1;opacity:.5}
+  #hstatus{font-weight:700;background:#ffffff14;padding:6px 12px;border-radius:20px;color:#f0c560}
+  main{max-width:1140px;margin:18px auto;padding:0 18px;display:grid;grid-template-columns:1fr 360px;gap:18px}
+  @media(max-width:960px){main{grid-template-columns:1fr}}
+  .card{background:linear-gradient(#16284a,#13233f);border:1px solid #2b4575;border-radius:16px;padding:16px;box-shadow:0 8px 24px #0004}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:#9fb2d6;margin:0 0 12px}
+  select{width:100%;padding:9px;border:1px solid #2b4575;border-radius:10px;background:#0e1c38;color:#e9f0ff}
+  label{display:block;margin:12px 0 4px;font-weight:700}
+  button{cursor:pointer;border:1px solid #2b4575;background:#1d3358;color:#e9f0ff;border-radius:10px;padding:9px 16px;font-weight:600;transition:.12s}
+  button:hover{transform:translateY(-1px);box-shadow:0 4px 12px #0005;border-color:#3d6fc4}
+  button.primary{background:linear-gradient(120deg,#caa23c,#f0c560);color:#1a1206;border:0;font-weight:800;font-size:16px;width:100%;margin-top:14px;padding:12px}
+  .hint{font-size:12.5px;color:#9fb2d6}
+  /* river */
+  #river{position:relative;height:110px;border-radius:14px;margin:4px 0 6px;overflow:hidden;
+    background:linear-gradient(#0e2347,#10325f);border:1px solid #2b4575}
+  #river .wave{position:absolute;left:0;right:0;height:2px;background:#ffffff18}
+  .tick{position:absolute;top:0;bottom:0;width:1px;background:#ffffff12}
+  .ticklbl{position:absolute;bottom:2px;font-size:9px;color:#6f87b5;transform:translateX(-50%)}
+  .boat{position:absolute;font-size:22px;transition:left .4s cubic-bezier(.4,1.3,.6,1);filter:drop-shadow(0 0 6px #f0c56088);transform:translate(-50%,-50%)}
+  .boatlbl{position:absolute;font-size:9px;color:#cdddff;transform:translate(-50%,-50%);text-shadow:0 1px 2px #000}
+  .dawn{position:absolute;right:0;top:0;bottom:0;width:46px;background:linear-gradient(90deg,#10325f00,#f0c56033);border-left:1px dashed #f0c560aa}
+  .dawn span{position:absolute;top:6px;right:4px;font-size:16px}
+  /* market */
+  #market{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .offer{width:90px;border-radius:12px;border:2px solid #2b4575;background:linear-gradient(#1a2f57,#142a4d);
+    padding:8px 6px;text-align:center;position:relative;transition:.12s}
+  .offer.legal{cursor:pointer;border-color:#f0c560}
+  .offer.legal:hover{transform:translateY(-5px);box-shadow:0 8px 16px #0006}
+  .offer .time{position:absolute;top:-9px;left:-9px;background:#0e1c38;border:2px solid #f0c560;color:#f0c560;
+    width:26px;height:26px;border-radius:50%;font-weight:800;line-height:22px;font-size:13px}
+  .offer .disc{width:46px;height:46px;border-radius:50%;margin:6px auto 4px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;color:#fff;box-shadow:inset 0 -4px 8px #0004}
+  .offer .nm{font-size:10px;color:#cdddff}
+  .offer .vp{margin-top:4px;font-size:12px;color:#f0c560;font-weight:800}
+  .offer .pv0{color:#6f87b5}
+  /* players */
+  .pl{border:1px solid #2b4575;border-radius:14px;padding:10px 12px;margin-bottom:9px;background:#13233f;transition:.15s}
+  .pl.cur{border-color:#f0c560;box-shadow:0 0 0 2px #f0c56033}
+  .pl.you .nm{color:#f0c560}
+  .pl .top{display:flex;justify-content:space-between;align-items:center;font-weight:800}
+  .cargo{display:flex;gap:8px;margin-top:7px;flex-wrap:wrap}
+  .cg{display:inline-flex;align-items:center;gap:3px;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid #2b4575}
+  .cg.best{border-color:#f0c560;box-shadow:0 0 0 1px #f0c56055 inset}
+  .pts{color:#f0c560;font-weight:800;font-size:17px}
+  .brk{font-size:11px;color:#9fb2d6}
+  /* log */
+  #preview{min-height:40px;font-size:13px;background:#0e1c38;border:1px solid #2b4575;border-radius:10px;padding:8px;margin-top:10px}
+  #log{height:170px;overflow:auto;font-size:12.5px;background:#0e1c38;border:1px solid #2b4575;border-radius:10px;padding:8px}
+  #log div{padding:3px 4px;border-bottom:1px solid #ffffff10;animation:fade .25s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .you-l{color:#f0c560;font-weight:600}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+  th,td{border:1px solid #2b4575;padding:3px 5px;text-align:center}
+  tr.chosen{background:#2a3f6e;font-weight:800}
+  footer{text-align:center;color:#6f87b5;font-size:12px;padding:14px}
+</style>
+</head>
+<body>
+<header>
+  <svg class="stars" viewBox="0 0 1200 120" preserveAspectRatio="none"><g fill="#fff"><circle cx="80" cy="30" r="1.5"/><circle cx="240" cy="60" r="1"/><circle cx="400" cy="25" r="1.8"/><circle cx="560" cy="50" r="1"/><circle cx="720" cy="35" r="1.4"/><circle cx="880" cy="65" r="1"/><circle cx="1040" cy="28" r="1.6"/><circle cx="1140" cy="55" r="1.2"/></g><circle cx="1100" cy="38" r="14" fill="#f0c560" opacity=".5"/></svg>
+  <div class="row"><div><h1>🏮 DÉRIVE</h1><div class="sub">la longue nuit · barques-lanternes sur le fleuve · 2–4 joueurs</div></div>
+  <div id="hstatus">Bonne nuit</div></div>
+</header>
+
+<main>
+  <section>
+    <div class="card" id="setupCard">
+      <h2>Nouvelle nuit</h2>
+      <label>Adversaires (barques IA)</label>
+      <select id="nbots"><option value="1">1 — 2 joueurs</option><option value="2">2 — 3 joueurs</option><option value="3" selected>3 — 4 joueurs</option></select>
+      <label>Tempérament des IA</label>
+      <select id="diff">
+        <option value="greedy">🌙 Pressé — fonce sur la valeur immédiate</option>
+        <option value="contrarian">🦉 Rival — t'affame ta couleur</option>
+        <option value="balanced" selected>⭐ Sage — creuse son set, gère le tempo</option>
+      </select>
+      <p class="hint">La barque la plus <b>en retard</b> (en amont) pagaie ; tu <b>rejoues</b> tant que tu l'es. Avancer beaucoup = céder des tours. But : ta plus grande collection d'<b>une seule couleur</b> rapporte gros (rendements croissants).</p>
+      <button class="primary" onclick="startGame()">🚣 Larguer les amarres</button>
+    </div>
+    <div class="card" id="boardCard" style="display:none">
+      <h2>Le fleuve <span id="riverInfo" class="hint" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div id="river"></div>
+      <h2 style="margin-top:14px">Le marché — choisis une cargaison</h2>
+      <div id="market"></div>
+      <div id="preview" class="hint">Survole une carte : elle indique son gain de score et de combien ta barque avance.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card" id="playersCard" style="display:none"><h2>Les barques</h2><div id="players"></div></div>
+    <div class="card" id="logCard" style="display:none;margin-top:18px">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:8px">Journal
+        <button onclick="showWhy()" id="whyBtn">🤔 Pourquoi l'IA ?</button></h2>
+      <div id="why"></div><div id="log"></div>
+    </div>
+  </section>
+</main>
+<footer>DÉRIVE · prototype — même moteur que le simulateur (4 cycles, 1er joueur résolu, ~30-40 min). Le pendant accessible de SÈVE.</footer>
+
+<script>
+const E=window.DeriveEngine;
+const ICON=E.COL_ICONS, NAME=E.COL_NAMES, SHAPE=E.COL_SHAPES;
+const COLHEX=['#3e83e6','#e8911f','#1fb389','#a064d6'];
+const BOAT=['🏮','🚣','⛵','🛶'], BCOL=['#f0c560','#e87d5a','#7ad0f0','#c79bf0'];
+const HUMAN=0;
+let M=null,cfg=null,rng=null,busy=false;
+
+function log(h,c){const d=document.createElement('div');if(c)d.className=c;d.innerHTML=h;document.getElementById('log').prepend(d);}
+function pchip(s){return s===HUMAN?'<b class="you-l">VOUS</b>':'Barque '+(s+1);}
+function disc(c){return `<span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:${COLHEX[c]};color:#fff;align-items:center;justify-content:center;font-size:11px">${SHAPE[c]}</span>`;}
+
+function startGame(){
+  const n=(+document.getElementById('nbots').value)+1, diff=document.getElementById('diff').value;
+  cfg=E.defaultConfig(); rng=E.makeRng((Date.now()>>>0)^(Math.random()*1e9>>>0));
+  const seats=[]; for(let i=0;i<n;i++)seats.push(i===HUMAN?null:diff);
+  M=E.createMatch(n,cfg,seats,rng,{});
+  document.getElementById('setupCard').style.display='none';
+  ['boardCard','playersCard','logCard'].forEach(id=>document.getElementById(id).style.display='block');
+  document.getElementById('log').innerHTML=''; document.getElementById('why').innerHTML='';
+  document.getElementById('riverInfo').textContent='— atteins la case '+M.state.T+' (l\'aube)';
+  log('🌙 La nuit commence. La barque la plus en amont pagaie.');
+  render(); pump();
+}
+
+function render(){
+  const s=M.state, T=s.T;
+  // river
+  const riv=document.getElementById('river');
+  let h='<div class="wave" style="top:34px"></div><div class="wave" style="top:64px"></div><div class="wave" style="top:90px"></div>';
+  h+='<div class="dawn"><span>🌅</span></div>';
+  for(let k=0;k<=T;k+=Math.ceil(T/10)){const x=6+(k/T)*88; h+=`<div class="tick" style="left:${x}%"></div><div class="ticklbl" style="left:${x}%">${k}</div>`;}
+  // stack offset for boats sharing a cell
+  const byPos={};
+  for(let p=0;p<s.nPlayers;p++){const k=Math.min(s.pos[p],T); (byPos[k]=byPos[k]||[]).push(p);}
+  for(const k in byPos){ byPos[k].forEach((p,idx)=>{
+    const x=6+(Math.min(s.pos[p],T)/T)*88, y=30+idx*20;
+    h+=`<div class="boat" style="left:${x}%;top:${y}px">${BOAT[p]}</div><div class="boatlbl" style="left:${x}%;top:${y+15}px">${p===HUMAN?'VOUS':'IA'+(p+1)}${s.pos[p]>=T?' ✓':''}</div>`;
+  });}
+  riv.innerHTML=h;
+  // market
+  const human=E.currentIsHuman(M), legal=E.legalMoves(s);
+  const mk=document.getElementById('market'); mk.innerHTML='';
+  s.market.forEach((card,slot)=>{
+    if(!card)return;
+    const el=document.createElement('div');
+    el.className='offer'+(human&&!M.done?' legal':'');
+    el.innerHTML=`<div class="time">${card.t}</div>
+      <div class="disc" style="background:${COLHEX[card.c]}">${SHAPE[card.c]}</div>
+      <div class="nm">${NAME[card.c]}</div>
+      <div class="vp ${card.vp?'':'pv0'}">${card.vp?('★ '+card.vp+' PV'):'—'}</div>`;
+    if(human&&!M.done){ el.onmouseenter=()=>preview(slot); el.onmouseleave=clearPrev; el.onclick=()=>humanPlay(slot); }
+    mk.appendChild(el);
+  });
+  // players
+  const P=document.getElementById('players'); P.innerHTML='';
+  const sc=E.scores(s), active=E.activeSeat(s), lead=Math.max(...sc.map(x=>x.points));
+  for(let p=0;p<s.nPlayers;p++){
+    const cg=s.cargo[p], best=Math.max(...cg);
+    const div=document.createElement('div');
+    div.className='pl'+(p===HUMAN?' you':'')+((active===p&&!M.done)?' cur':'');
+    div.innerHTML=`<div class="top"><span class="nm">${BOAT[p]} ${p===HUMAN?'VOUS':'Barque '+(p+1)} ${(active===p&&!M.done)?'🚣':''} ${sc[p].points===lead&&lead>0?'👑':''}</span>
+      <span class="pts">${sc[p].points}</span></div>
+      <div class="cargo">${cg.map((n,c)=>`<span class="cg ${n===best&&n>0?'best':''}" style="color:${COLHEX[c]}">${SHAPE[c]} ${n}</span>`).join('')}</div>
+      <div class="brk">PV ${sc[p].vp} + set ${sc[p].set} (plus grande couleur : ${best})</div>`;
+    P.appendChild(div);
+  }
+  document.getElementById('hstatus').innerHTML = M.done?'🌅 L\'aube se lève':(human?'▶ À vous de pagayer':'⏳ Les IA dérivent…');
+  if(M.done) endGame(sc);
+}
+
+function preview(slot){
+  if(busy||M.done||!E.currentIsHuman(M))return;
+  const c=E.evaluateMoves(M.state,'balanced',rng).find(x=>x.slot===slot);
+  if(!c)return;
+  document.getElementById('preview').innerHTML=
+    `Prendre ${disc(c.c)} <b>${NAME[c.c]}</b> (★${c.vp} PV) : <b>+${c.delta} pts</b> tout de suite,
+     mais ta barque avance de <b>${c.t}</b> → ${c.t<=1?'tu restes en amont et <b>rejoues</b> sûrement':'tu cèdes la main'}.
+     <span class="hint"> Un rival en convoite ${c.denial}.</span>`;
+}
+function clearPrev(){if(!busy)document.getElementById('preview').innerHTML='<span class="hint">Survole une carte pour voir gain et avancée.</span>';}
+
+function humanPlay(slot){
+  if(busy||M.done||!E.currentIsHuman(M))return;
+  const card=M.state.market[slot];
+  E.matchPlay(M,slot);
+  log(`${pchip(HUMAN)} prend ${disc(card.c)} ${NAME[card.c]} (t${card.t}, ★${card.vp})`,'you-l');
+  render(); pump();
+}
+
+function pump(){
+  if(M.done){render();return;}
+  if(E.currentIsHuman(M)){render();return;}
+  busy=true; render();
+  setTimeout(()=>{
+    const info=E.matchPlay(M), ai=M.lastAI;
+    if(info&&info.card) log(`${pchip(ai.seat)} <span class="hint">(${ai.strat})</span> prend ${disc(info.card.c)} ${NAME[info.card.c]} (t${info.card.t}, ★${info.card.vp})`);
+    else if(info) log(`${pchip(info.player)} dérive (marché vide)`);
+    busy=false; pump();
+  },520);
+}
+
+function showWhy(){
+  const w=document.getElementById('why');
+  if(!M||!M.lastAI){w.innerHTML='<p class="hint">Aucune IA n\'a encore joué.</p>';return;}
+  const ai=M.lastAI;
+  let h=`<p class="hint">Dernier coup — ${pchip(ai.seat)} (<b>${ai.strat}</b>) :</p>
+   <table><tr><th>couleur</th><th>temps</th><th>PV</th><th>+score</th><th>convoité</th><th>valeur</th></tr>`;
+  ai.candidates.slice(0,6).forEach(c=>{
+    h+=`<tr class="${c.slot===ai.slot?'chosen':''}"><td>${SHAPE[c.c]} ${NAME[c.c]}</td><td>${c.t}</td><td>${c.vp}</td>
+      <td>+${c.delta}</td><td>${c.denial}</td><td>${c.value.toFixed(1)}</td></tr>`;
+  });
+  h+='</table><p class="hint">Ligne dorée = coup choisi. « valeur » = gain de score − coût en tempo (+ déni selon la stratégie).</p>';
+  w.innerHTML=h;
+}
+
+function endGame(sc){
+  let best=-1,wi=[]; sc.forEach((x,i)=>{if(x.points>best){best=x.points;wi=[i];}else if(x.points===best)wi.push(i);});
+  const win=wi[0];
+  document.getElementById('hstatus').innerHTML = win===HUMAN?'🏆 Vous gagnez la nuit !':`🌅 Barque ${win+1} l'emporte`;
+  log(`<b>🌅 L'aube. </b>${pchip(win)} l'emporte avec <b>${best} pts</b>.`);
+  if(!document.getElementById('replayBtn'))
+    document.getElementById('preview').innerHTML=`<button id="replayBtn" class="primary" style="width:auto;padding:8px 14px" onclick="location.reload()">↻ Rejouer</button>`;
+}
+</script>
+</body>
+</html>

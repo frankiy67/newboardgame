@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DÉRIVE — Print &amp; Play (N&amp;B)</title>
+<style>
+  @page{size:A4;margin:10mm}
+  *{box-sizing:border-box}
+  body{font:12px/1.4 Georgia,"Times New Roman",serif;color:#000;background:#fff;margin:0;padding:12px}
+  h1{font-size:23px;margin:0 0 2px} h2{font-size:15px;border-bottom:2px solid #000;padding-bottom:3px;margin:18px 0 10px;page-break-after:avoid}
+  .muted{color:#444;font-size:11.5px}
+  .page-break{page-break-before:always}
+  .noprint{background:#f3f3f3;border:1px dashed #999;padding:8px 12px;border-radius:6px;margin:10px 0}
+  @media print{.noprint{display:none}}
+  .legend span{display:inline-block;margin-right:14px;font-size:13px}
+  /* cards */
+  .cards{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .ofr{border:1.5px solid #000;border-radius:7px;height:104px;position:relative;padding:5px;text-align:center;page-break-inside:avoid;display:flex;flex-direction:column;justify-content:center}
+  .ofr .t{position:absolute;top:3px;left:5px;font-weight:bold;font-size:13px;border:1.5px solid #000;border-radius:50%;width:20px;height:20px;line-height:17px}
+  .ofr .sh{font-size:30px;line-height:1}
+  .ofr .nm{font-size:10px}
+  .ofr .vp{position:absolute;bottom:3px;right:5px;font-size:11px}
+  /* track */
+  .track{display:flex;flex-wrap:wrap;gap:0;border:1.5px solid #000;border-radius:6px;overflow:hidden}
+  .cell{width:18px;height:26px;border-right:1px solid #bbb;font-size:8px;text-align:center;padding-top:1px;color:#444}
+  .cell.m5{border-right:1.5px solid #000;font-weight:bold;color:#000}
+  .aid{border:2px solid #000;border-radius:8px;padding:10px 12px;margin-bottom:10px;page-break-inside:avoid}
+  table{border-collapse:collapse;width:100%;margin-top:6px} th,td{border:1px solid #000;padding:3px 6px;text-align:center;font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="noprint">🖨️ <b>Imprimez en N&amp;B.</b> Page 1 : les 56 cartes Offre (découpez). Page 2 : la piste Fleuve + aides. Couleurs distinguées par <b>forme</b> (●▲■◆) — aucune couleur nécessaire.</div>
+
+<h1>🏮 DÉRIVE — Print &amp; Play</h1>
+<div class="muted">2–4 joueurs · 30–40 min · matériel : ce PDF + 4 pions empilables.</div>
+<div class="legend" style="margin-top:8px"><span><b>●</b> Saphir</span><span><b>▲</b> Ambre</span><span><b>■</b> Jade</span><span><b>◆</b> Améthyste</span> · <span>chiffre cerclé = <b>temps</b></span> · <span>★ = <b>PV</b></span></div>
+
+<h2>1 · Les 56 cartes Offre</h2>
+<div class="cards" id="cards"></div>
+
+<div class="page-break"></div>
+<h2>2 · La piste Fleuve (0 → 50)</h2>
+<div class="muted" style="margin-bottom:6px">Placez le marqueur Aube sur la case <b>T</b> : <b>50</b> à 2 j · <b>30</b> à 3 j · <b>22</b> à 4 j. Empilez les barques sur la case 0.</div>
+<div class="track" id="track"></div>
+
+<h2>3 · Aides de jeu &amp; barème</h2>
+<div class="aid">
+  <h3 style="margin:0 0 6px">Tour de jeu</h3>
+  <div><b>La barque la plus en amont joue</b> (égalité → celle sur le dessus de la pile). Une action :</div>
+  <ol style="margin:4px 0 0 18px">
+    <li>Prends 1 carte du Marché (5 cartes).</li>
+    <li>Avance ta barque de son <b>temps</b> (pose-la sur le dessus).</li>
+    <li>Ajoute-la à ta cargaison ; réapprovisionne le Marché.</li>
+  </ol>
+  <div style="margin-top:5px">Tu <b>rejoues</b> tant que tu es le plus en amont. Fin quand toutes les barques ont franchi T.</div>
+  <table><tr><th>Plus gros set d'1 couleur</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+  <tr><th>Bonus</th><td>0</td><td>1</td><td>4</td><td>9</td><td>16</td><td>25</td><td>36</td><td>49</td></tr></table>
+  <div style="margin-top:5px"><b>Score = PV des cartes + bonus de set</b> (ta couleur la plus nombreuse).</div>
+</div>
+
+<script>
+const SHAPES=['●','▲','■','◆'], NAMES=['Saphir','Ambre','Jade','Améthyste'];
+// pioche = template ×4 couleurs (identique au moteur)
+const TEMPLATE=[{t:1,vp:0,c:4},{t:2,vp:1,c:4},{t:3,vp:1,c:3},{t:4,vp:2,c:3}];
+(function(){
+  const wrap=document.getElementById('cards');
+  for(let col=0;col<4;col++) for(const s of TEMPLATE) for(let k=0;k<s.c;k++){
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="ofr"><div class="t">${s.t}</div>
+        <div class="sh">${SHAPES[col]}</div><div class="nm">${NAMES[col]}</div>
+        <div class="vp">${s.vp?('★'.repeat(s.vp)):'·'}</div></div>`);
+  }
+})();
+(function(){
+  const tr=document.getElementById('track');
+  for(let i=0;i<=50;i++) tr.insertAdjacentHTML('beforeend',
+    `<div class="cell ${i%5===0?'m5':''}">${i%5===0?i:''}${i===0?'<br>↓':''}</div>`);
+})();
+</script>
+</body>
+</html>

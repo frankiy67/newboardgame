@@ -187,6 +187,7 @@
   // note chaque slot selon une stratégie → liste triée (sert au "pourquoi" + aperçu humain)
   function evaluateMoves(s, strategy, rng) {
     const p = activeSeat(s);
+    if (p < 0) return [];
     return legalMoves(s).map(slot => {
       const card = s.market[slot];
       const delta = immediateDelta(s, slot, p);
