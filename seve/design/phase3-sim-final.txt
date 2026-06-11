@@ -1,0 +1,42 @@
+
+══════════ SÈVE — v1.0-FINAL (2000 parties/config, seed 12345) ══════════
+config: seedsPerPlot=4 bouquet=8 single=1 endThreshold=0 lastPlaceBonus=0
+
+── 2 joueurs ──
+  winrate/stratégie : random 0.1%  greedy 73.1%  balanced 70.8%  contrarian 55.7%
+  winrate/siège(mixte): 48.8%  51.2%
+  winrate/siège(miroir): 50.8%  49.2%  (écart 1.6 pts)
+  durée tours        : moyenne 40.0  std 0.0 (0.0%)
+  écart de score     : moyenne 77.9  std 61.0
+  récolte/type       : 🫘 25.0%  🍅 24.8%  🌽 25.1%  🍆 25.1%
+  distance de semis  : 1:30.6% 2:22.4% 3:14.4% 4:11.1% 5:8.3% 6:5.2% 7:3.3% 8:2.1% 9:1.2% 10:0.7% 11:0.4% 12:0.1% 13:0.2% 14:0.1% 15:0.0% 16:0.0% 17:0.0% 18:0.0% 19:0.0% 20:0.0% 22:0.0%
+  🚩 ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+
+── 3 joueurs ──
+  winrate/stratégie : random 0.1%  greedy 43.7%  balanced 60.4%  contrarian 29.6%
+  winrate/siège(mixte): 33.9%  33.0%  33.1%
+  winrate/siège(miroir): 34.3%  32.3%  33.5%  (écart 2.1 pts)
+  durée tours        : moyenne 45.0  std 0.0 (0.0%)
+  écart de score     : moyenne 58.5  std 25.3
+  récolte/type       : 🫘 24.8%  🍅 25.0%  🌽 25.1%  🍆 25.1%
+  distance de semis  : 1:42.9% 2:24.5% 3:11.7% 4:7.7% 5:5.8% 6:3.4% 7:2.1% 8:1.0% 9:0.5% 10:0.3% 11:0.1% 12:0.0% 13:0.1% 14:0.0% 15:0.0% 16:0.0% 17:0.0% 18:0.0%
+  🚩 ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+
+── 4 joueurs ──
+  winrate/stratégie : random 0.1%  greedy 28.0%  balanced 53.5%  contrarian 18.4%
+  winrate/siège(mixte): 24.2%  26.1%  24.5%  25.3%
+  winrate/siège(miroir): 25.9%  23.9%  26.4%  23.8%  (écart 2.5 pts)
+  durée tours        : moyenne 48.0  std 0.0 (0.1%)
+  écart de score     : moyenne 42.6  std 12.8
+  récolte/type       : 🫘 25.2%  🍅 24.9%  🌽 24.9%  🍆 25.1%
+  distance de semis  : 1:50.6% 2:23.4% 3:9.0% 4:6.0% 5:4.9% 6:2.9% 7:1.6% 8:0.9% 9:0.4% 10:0.2% 11:0.1% 12:0.0% 13:0.0% 14:0.0% 15:0.0% 17:0.0%
+  🚩 STRATÉGIE DOMINANTE: balanced 53.5% > 40% (4j)
+  🚩 ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+
+── BILAN red flags v1.0-FINAL ──
+  🚩 [2j] ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+  🚩 [3j] ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+  🚩 [4j] STRATÉGIE DOMINANTE: balanced 53.5% > 40% (4j)
+  🚩 [4j] ZÉRO ACCESSIBILITÉ: random gagne 0.1% < 5%
+
+TOTAL red flags: 4

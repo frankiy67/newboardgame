@@ -26,9 +26,13 @@
       seedsPerPlot: 4,      // graines initiales par parcelle
       bouquetValue: 8,      // points d'un bouquet arc-en-ciel (1 de chaque)
       singleValue: 1,       // points d'un légume isolé
-      endThreshold: 0,      // fin quand total graines anneau <= seuil
+      endThreshold: 0,      // fin quand total graines anneau <= seuil (si pas de saison)
       lastPlaceBonus: 0,    // LEVIER catch-up : graines rendues au dernier (0 = off)
-      rotateStart: false,   // le premier joueur tourne à chaque manche (anti 1er-joueur)
+      rotateStart: true,    // le premier joueur tourne à chaque manche (anti 1er-joueur)
+      rainPerRound: 9,      // SOURCE : graines ajoutées aux parcelles les plus vides/manche
+      roundsByCount: { 2: 20, 3: 15, 4: 12 }, // longueur de saison (multiple de n → équité)
+      randomFirstPlayer: true, // 1er joueur tiré au sort (distribue l'écrémage final) [c6 ✓]
+      randomRain: true,     // la pluie tombe sur des parcelles AU HASARD (valve de variance) [c7 ✓]
     };
     return Object.assign(cfg, overrides || {});
   }
@@ -226,9 +230,14 @@
   function playGame(nPlayers, cfg, strategyBySeat, rng, opts) {
     opts = opts || {};
     const state = initState(nPlayers, cfg, rng, opts.jitter);
-    let starter = 0, guard = 0;
+    const maxRounds = (cfg.roundsByCount && cfg.roundsByCount[nPlayers]) || 0;
+    let starter = cfg.randomFirstPlayer && rng ? Math.floor(rng() * nPlayers) : 0;
+    let round = 0, guard = 0;
     while (guard++ < 50000) {
-      if (isOver(state)) break;            // fin en début de manche → tours égaux
+      if (maxRounds > 0) { if (round >= maxRounds) break; }
+      else if (isOver(state)) break;       // mode descendant (sans saison)
+      // SOURCE : la pluie nourrit les parcelles (les plus vides, ou au hasard)
+      if (cfg.rainPerRound > 0) rain(state, cfg.rainPerRound, cfg.randomRain ? rng : null);
       // LEVIER catch-up : rend des graines au joueur en dernière position
       if (cfg.lastPlaceBonus > 0) applyLastPlaceBonus(state, cfg.lastPlaceBonus);
       let passes = 0;
@@ -240,11 +249,27 @@
           applyMove(state, mv);
         } else passes++;
       }
-      if (passes >= nPlayers) break;
+      round++;
+      if (passes >= nPlayers && maxRounds === 0) break;
       if (cfg.rotateStart) starter = (starter + 1) % nPlayers;
     }
+    state.rounds = round;
     state.done = true;
     return { state, scores: scores(state), winner: winner(state), turns: state.turn };
+  }
+
+  // SOURCE : ajoute `k` graines. Si rng fourni → parcelles au hasard (variance),
+  // sinon → toujours la parcelle la plus vide (déterministe).
+  function rain(state, k, rng) {
+    for (let i = 0; i < k; i++) {
+      let target;
+      if (rng) target = Math.floor(rng() * state.ring.length);
+      else {
+        target = 0;
+        for (let j = 1; j < state.ring.length; j++) if (state.ring[j] < state.ring[target]) target = j;
+      }
+      state.ring[target] += 1;
+    }
   }
 
   // ajoute `k` graines à l'anneau pour aider le joueur le plus en retard :
@@ -265,7 +290,7 @@
   return {
     N_TYPES, TYPE_ICONS, TYPE_NAMES, TYPE_SHAPES,
     defaultConfig, makeRng, initState, cloneState, ringTotal,
-    legalMoves, applyMove, advance, isOver,
+    legalMoves, applyMove, advance, isOver, rain,
     scorePlayer, scores, winner,
     AIs, evaluateMoves, bestHarvestAvailable, playGame,
   };
